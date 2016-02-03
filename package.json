@@ -1,0 +1,16 @@
+{
+  "name": "syncmentormoodle",
+  "version": "1.0.0",
+  "description": "Faz a sincronia de cursos e alunos do mentor para o moodle",
+  "main": "js/main-node.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mentor",
+    "moodle",
+    "sync"
+  ],
+  "author": "André Rocha (d3roch4@gmail.com)",
+  "license": "ISC"
+}

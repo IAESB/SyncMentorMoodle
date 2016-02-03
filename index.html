@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt">    
+<head>
+    <meta charset="utf-8">
+    <script src="js/jquery-1.11.3.min.js"></script>
+    <script src="js/moodle.js"></script>
+    <script src="js/sync-mentor-moodle.js"></script>
+</head>
+<body>
+    <div id="conexao">
+        Url: <input type='text' id='url_moodle' placeholder='Url do Moodle'> <br>
+        Usuario: <input type='text' id='usuario' placeholder='Usuario'> <br>
+        Senha: <input type='text' id='senha' placeholder='Senha'> <br>
+        Service: <input type="text" id="service" > <br>
+        Token: <input type='text' id='token' placeholder='Token (Opcional)'> <br>
+        <button id="conectar">Conectar</button>
+    </div>
+    <div id="opcoes">
+        Categoria: <select id="categoria"></select> <br>
+        Perfil professor: <input type='text'  id="professor"></select> <br>
+        Perfil aluno: <input type='text'  id="aluno"></select> <br>
+        Arquivo CSV: <input type='file' accept='text/plain' id='arquivo'> <br>
+        <div id='output' style="width: 100%; height: 400px; overflow: scroll;"></div> <br>
+        <button id='processar'>Processar</button>
+    </div>
+    <script src="js/main-html.js"></script>
+</body>
+</html>

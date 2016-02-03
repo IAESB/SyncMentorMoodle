@@ -1,0 +1,2 @@
+C:\Users\Andre\workspace\SyncMentorMoodle\bin\Microsoft.NodejsTools.WebRole.dll
+C:\Users\Andre\workspace\SyncMentorMoodle\obj\Debug\SyncMentorMoodle.njsprojResolveAssemblyReference.cache
