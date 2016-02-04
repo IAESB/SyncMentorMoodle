@@ -18,6 +18,7 @@
   <ItemGroup>
     <Content Include="index.html" />
     <Content Include="package.json" />
+    <Compile Include="js\config.js" />
     <Compile Include="js\jquery-1.11.3.min.js" />
     <Compile Include="js\main-html.js" />
     <Compile Include="js\main-node.js" />

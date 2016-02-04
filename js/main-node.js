@@ -1,50 +1,17 @@
-var configMentor = {
-    userName: 'user',
-    password: 'passww',
-    server: 'local.db',
-    options: {
-        database: 'mentor', 
-        port: '4304',
-        rowCollectionOnDone: true,
-        requestTimeout: 15000,
-        connectTimeout: 15000
-    }
-};
-var configPostfix = {
-    host     : 'localhost',
-    port     : '3306',
-    user     : 'root',
-    password : 'root',
-    database : 'postfix',
-    connectionLimit : 50,
-    connectTimeout: 15000,
-    waitForConnections: true
-};
-var configMoodle = {
-    url        : 'http://aep.fasb.edu.br',
-    user       : 'admin', 
-    password   : 'passworddd',     
-    service    : 'mentor_sync',  
-    token      : '' // opcional
-};
-var ANO = 2015;
-var SEMESTRE = 2;
-var PERFIL_ESTUDANTE = 5;
-var PERFIL_PROFESSOR = 3;
-var CONEXAO_SIMULTANEA_MOODLE = 50; // Define quantas conexoes seram criadas ao mesmo tempo no moodle, um numero muito alto pode derrubar o servidor, um numero muito baixo vai demorar de mais a sincronia.
 
 
 
-var tedious = require('tedious');
+var tedious    = require('tedious');
 var mysql      = require('mysql');
-var sync = require('./sync-mentor-moodle.js');
-var Moodle = require("./moodle.js").Moodle;
 var sequencial = require('sync');
+var config     = require("./config.js");
+var sync       = require('./sync-mentor-moodle.js');
+var Moodle     = require("./moodle.js").Moodle;
 
 require('events').EventEmitter.prototype._maxListeners = 500;
-var connectionPostfix = mysql.createPool(configPostfix);
+var connectionPostfix = mysql.createPool(config.configPostfix);
 var cacheCursosUsuario = new Object(); // Map com id curso => arrayUsers.
-var moodle = Moodle(configMoodle);
+var moodle = Moodle(config.configMoodle);
 
 
 
@@ -71,7 +38,7 @@ function execultaProfessor(moodle, curso) {
         
         sync.addUsuario(moodle, ['professor', professor.nome, professor.sobrenome, professor.email, '123456'], function (erro, usr) {
             if (usr)
-                moodle.inscreverUsuarioCurso(usr.id, curso.id, PERFIL_PROFESSOR, function (err, result) {});
+                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_PROFESSOR, function (err, result) {});
         });
         if (!cacheCursosUsuario[curso.id]) {
             cacheCursosUsuario[curso.id] = new Object();
@@ -94,8 +61,8 @@ function execultaAlunos(moodle, curso) {
             AND MD_CODDIS = DI_CODDIS \
             AND DI_DISTEL = '" + curso.codigoDisciplina +
             "' AND MD_CODTUR = '" + curso.codigoTurma +
-            "' AND MD_ANOMAT = " + ANO +
-            " AND MD_SEQMAT = " + SEMESTRE;
+            "' AND MD_ANOMAT = " + config.configMentor.ANO +
+            " AND MD_SEQMAT = " + config.configMentor.SEMESTRE;
     var rowsA = getRowsFromMentor.sync(null, query);
     for (var i in rowsA) {
         var columns = rowsA[i];
@@ -119,7 +86,7 @@ function execultaAlunos(moodle, curso) {
             }
             cacheCursosUsuario[curso.id][idMentorAluno] = true;
 
-            addAluno(moodle, curso, ['aluno', primeironome, sobrenome, email.email, '123456'], (i % CONEXAO_SIMULTANEA_MOODLE == 0));
+            addAluno(moodle, curso, ['aluno', primeironome, sobrenome, email.email, '123456'], (i % config.configMoodle.CONEXAO_SIMULTANEA_MOODLE == 0));
             
         }
         catch (e) {
@@ -156,12 +123,12 @@ function addAluno(moodle, curso, arrayCampos, sincronizado) // se sincronizado==
     if (sincronizado) {
         var usr = sync.addUsuario.sync(null, moodle, arrayCampos);
         if (usr) {
-            moodle.inscreverUsuarioCurso(usr.id, curso.id, PERFIL_ESTUDANTE, function (erro, res) { });
+            moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
         }
     } else {
         sync.addUsuario(moodle, arrayCampos, function (erro, usr) {
             if (usr) {
-                moodle.inscreverUsuarioCurso(usr.id, curso.id, PERFIL_ESTUDANTE, function (erro, res) { });
+                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
             }
         });
     }
@@ -170,7 +137,7 @@ function addAluno(moodle, curso, arrayCampos, sincronizado) // se sincronizado==
 
 function getRowsFromMentor(sql, callback)
 {
-    var connection = new tedious.Connection(configMentor);
+    var connection = new tedious.Connection(config.configMentor);
     connection.on('connect', function (err) {
         if (err)
             callback(err);
@@ -223,24 +190,20 @@ function getIdMentor(email, callback) {
 
 var arrayCursos = [];
 moodle.conectar(function () {
-    var connection = new tedious.Connection(configMentor);
-    connection.on('connect', function (err) {
-        if (err)
-            console.error(err);
-        else {            
-            var query = "SELECT DISTINCT \
+    sequencial(function () {
+        var query = "SELECT DISTINCT \
             DI_DESDIS, DI_DISTEL, MD_CODTUR, PF_CODPRO, CR_NOMCUR \
             FROM \
             TB_CURSO, \
                 TB_GRADE, \
                 TB_MESTRE_DISCIPLINA, \
                 TB_DISCIPLINA \
-            left outer join TB_GRADE_HORARIO_PROF on(DI_CODDIS = GP_CODDIS and GP_ANOMAT=" + ANO + "  AND GP_SEQMAT = " + SEMESTRE + " ) \
+            left outer join TB_GRADE_HORARIO_PROF on(DI_CODDIS = GP_CODDIS and GP_ANOMAT=" + config.configMentor.ANO + "  AND GP_SEQMAT = " + config.configMentor.SEMESTRE + " ) \
             left outer JOIN TB_PROFESSOR on(GP_CODPRO = PF_CODPRO), \
                 TB_ALUNO \
             WHERE \
-                MD_ANOMAT = " + ANO + " \
-                AND MD_SEQMAT = " + SEMESTRE + " \
+                MD_ANOMAT = " + config.configMentor.ANO + " \
+                AND MD_SEQMAT = " + config.configMentor.SEMESTRE + " \
                 AND MD_CODSIT = 1 \
                 AND CR_CODCUR = GD_CODCUR \
                 AND GD_CODGRA = MD_CODGRA \
@@ -248,33 +211,53 @@ moodle.conectar(function () {
                 AND MD_CODALU = AL_CODALU \
                 AND MD_CODRES <> 16 \
             ORDER BY \
-                DI_DESDIS";
+                DI_DESDIS";      
+        var rows = getRowsFromMentor.sync(null, query);
+
+        for (var i in rows) {
+            var columns = rows[i];
+            curso = {
+                nome: columns[0].value,
+                codigoDisciplina: columns[1].value,
+                codigoTurma: columns[2].value,
+                prof: columns[3].value,
+                categoria: columns[4].value,
+            };
+            try {
+                var curso = sync.addCurso.sync(null, moodle, curso);//, function(curso){
+                processaCurso(curso);
+                            //});                            
+            }
+                        catch (e) {
+                console.error("Erro: " + e);
+            }
+                        //if(i>1) break; // apenas para DEBUG
+        }
+        console.log('processados: ' + rows.length + ' cursos');
+        
+        setTimeout(function () { // aguarda a finalização das thread e exit.
+            var array = process._getActiveHandles();
+            var array2 = process._getActiveRequests();
+            connectionPostfix.end(function (err) {
+                            // all connections in the pool have ended
+            });
+            process.exit(0);
+        }, 50000);
+    });
+});
+
+
+/*var connection = new tedious.Connection(config.configMentor);
+    connection.on('connect', function (err) {
+        if (err)
+            console.error(err);
+        else {            
+            
             var request = new tedious.Request(query, function (err, rowCount) {
                 connection.close();
                 
                 sequencial(function () {
-                    for (var i in arrayCursos) {
-                        var curso = arrayCursos[i];
-                        try {
-                            var curso = sync.addCurso.sync(null, moodle, curso);//, function(curso){
-                            processaCurso(curso);
-                            //});                            
-                        }
-                        catch (e) {
-                            console.error("Erro: " + e);
-                        }
-                        //if(i>1) break; // apenas para DEBUG
-                    }
-                    console.log('processados: ' + rowCount + ' cursos');
                     
-                    setTimeout(function () { // aguarda a finalização das thread e exit.
-                        var array = process._getActiveHandles();
-                        var array2 = process._getActiveRequests();
-                        connectionPostfix.end(function (err) {
-                            // all connections in the pool have ended
-                        });
-                        process.exit(0);
-                    }, 50000);
                 });
             });
             request.on('doneInProc', function (rowCount, more, rows) {
@@ -292,4 +275,5 @@ moodle.conectar(function () {
             connection.execSql(request);
         }
     });
-});
+ * 
+ * */
