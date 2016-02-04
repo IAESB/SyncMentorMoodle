@@ -1,7 +1,7 @@
 var configMentor = {
-    userName: 'leitor',
-    password: 'SoSeiLer',
-    server: '192.168.9.232',
+    userName: 'user',
+    password: 'passww',
+    server: 'local.db',
     options: {
         database: 'mentor', 
         port: '4304',
@@ -23,7 +23,7 @@ var configPostfix = {
 var configMoodle = {
     url        : 'http://aep.fasb.edu.br',
     user       : 'admin', 
-    password   : 'Aep2016@dmin',     
+    password   : 'passworddd',     
     service    : 'mentor_sync',  
     token      : '' // opcional
 };
@@ -31,12 +31,9 @@ var ANO = 2015;
 var SEMESTRE = 2;
 var PERFIL_ESTUDANTE = 5;
 var PERFIL_PROFESSOR = 3;
+var CONEXAO_SIMULTANEA_MOODLE = 50; // Define quantas conexoes seram criadas ao mesmo tempo no moodle, um numero muito alto pode derrubar o servidor, um numero muito baixo vai demorar de mais a sincronia.
 
-var poolConfigTedius = {
-    min: 1,
-    max: 100,
-    log: false
-};
+
 
 var tedious = require('tedious');
 var mysql      = require('mysql');
@@ -122,7 +119,7 @@ function execultaAlunos(moodle, curso) {
             }
             cacheCursosUsuario[curso.id][idMentorAluno] = true;
 
-            addAluno(moodle, curso, ['aluno', primeironome, sobrenome, email.email, '123456'], (i % 50 == 0)); // para melhor performance são ciradas 100 requisição não sincronizada, esse numero pode ser maior, mas um numero alto pode derrubar o servidor.
+            addAluno(moodle, curso, ['aluno', primeironome, sobrenome, email.email, '123456'], (i % CONEXAO_SIMULTANEA_MOODLE == 0));
             
         }
         catch (e) {
