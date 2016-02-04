@@ -53,9 +53,19 @@ var Moodle = function(connection) {
         this.callRequestFunc("core_user_get_users", param, callback);
     }
     
+    this.getUsuariosPorCurso = function (id_curso, callback){
+        var param = "courseid=" + id_curso;
+        this.callRequestFunc("core_enrol_get_enrolled_users", param, callback);
+    }
+    
     this.inscreverUsuarioCurso = function(idUsuario, idCurso, idRole, callback){ // idRole, 3: professor, 5: estudante
         var param = "enrolments[0][roleid]="+idRole+"&enrolments[0][userid]="+idUsuario+"&enrolments[0][courseid]="+idCurso;
         this.callRequestFunc("enrol_manual_enrol_users", param, callback);
+    }
+
+    this.removeUsuarioCurso = function (idUsuario, idCurso, callback){
+        var param = "enrolments[0][userid]=" + idUsuario + "&enrolments[0][courseid]=" + idCurso;
+        this.callRequestFunc("enrol_manual_unenrol_users", param, callback);
     }
 };
 
@@ -88,8 +98,9 @@ function requestServidor(url, callback){
                     error = dados.message;
                 }
             }
-            if (error || typeof callback != "function") {
-                error = url+'\n'+error;
+            if (typeof callback != "function") {
+                error = url + '\n' + error;
+                console.error("callback is not a functions: "+error);
             }
             callback(error, dados);
         });
