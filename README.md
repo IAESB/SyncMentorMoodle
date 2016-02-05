@@ -58,6 +58,30 @@ var configMoodle = {
 };
 ```
 
+In the words of Abraham Lincoln:
+
+> Pardon my French
+
+WebService do Moodle
+--------------------
+Para haver uma cenexao com o moodle é necessario que seu webservice esteja ativado e devidamente configurado, para isso na página:
+> Administração do site => Plugins => Plugins => Serviços da Web => Resumo
+
+Aqui você vai encontrar varios itens a serem seguidos para habilitar o WebService, somente os itens 1, 2, 5 e 6 são necessarios, os outros são recomendados para uma melhor segurança.
+* 1. Habilitar web services, habilite e salve a mudança
+* 2. Ative somente o 'Protocolo REST'
+* 5. Adicione um novo serviço, o campo Nome breve iremos usar no arquivo config.js
+* 6. Adicione as seguintes funções ao serviço:
+	* core_course_get_categories
+	* core_course_create_categories
+	* core_course_search_courses
+	* core_course_create_courses
+	* core_user_create_users
+	* core_user_get_users
+	* core_enrol_get_enrolled_users
+	* enrol_manual_enrol_users
+	* enrol_manual_unenrol_users
+
 Executar
 --------
 Agora basta rodar com o comando:
