@@ -58,10 +58,6 @@ var configMoodle = {
 };
 ```
 
-In the words of Abraham Lincoln:
-
-> Pardon my French
-
 WebService do Moodle
 --------------------
 Para haver uma cenexao com o moodle é necessario que seu webservice esteja ativado e devidamente configurado, para isso na página:
