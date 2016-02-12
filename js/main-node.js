@@ -33,13 +33,14 @@ function execultaProfessor(moodle, curso) {
         var pos = professor.nome.indexOf(' ');
         professor.sobrenome = professor.nome.substr(pos + 1);
         professor.nome = professor.nome.substr(0, pos);
+        professor.senha = "Prof@123Senha"
         
-        //console.log("professor;" + professor.nome + ';' + professor.sobrenome + ';' + professor.email + ";" + curso.prof);
+        console.log("professor;" + professor.nome + ';' + professor.sobrenome + ';' + professor.email + ";" + curso.prof);
         
-        sync.addUsuario(moodle, ['professor', professor.nome, professor.sobrenome, professor.email, '123456'], function (erro, usr) {
-            if (usr)
-                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_PROFESSOR, function (err, result) {});
-        });
+        var usr = sync.addUsuario(moodle, professor);
+        if (usr)
+            moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_PROFESSOR, function (err, result) {});
+
         if (!cacheCursosUsuario[curso.id]) {
             cacheCursosUsuario[curso.id] = new Object();
         }
@@ -76,7 +77,7 @@ function execultaAlunos(moodle, curso) {
                 console.error("Erro -  " + email.nome + '-' + idMentorAluno + '-' + email.email);
                 continue;
             }
-            //console.log("aluno;" + email.nome + ';' + email.email + ";" + idMentorAluno);
+            console.log("aluno;" + email.nome + ';' + email.email + ";" + idMentorAluno);
             var pos = email.nome.indexOf(' ');
             var primeironome = email.nome.substr(0, pos);
             var sobrenome = email.nome.substr(pos + 1);
@@ -85,12 +86,22 @@ function execultaAlunos(moodle, curso) {
                 cacheCursosUsuario[curso.id] = new Object();
             }
             cacheCursosUsuario[curso.id][idMentorAluno] = true;
+            aluno = {
+                nome: primeironome,
+                sobrenome: sobrenome,
+                email: email.email,
+                senha: 'Aluno@123Senha'
+            };
 
-            addAluno(moodle, curso, ['aluno', primeironome, sobrenome, email.email, '123456'], (i % config.configMoodle.CONEXAO_SIMULTANEA_MOODLE == 0));
+            var usr = sync.addUsuario(moodle, aluno);
+            if (usr) {
+                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
+            }
+            //addAluno(moodle, curso, aluno, (i % config.configMoodle.CONEXAO_SIMULTANEA_MOODLE == 0));
             
         }
         catch (e) {
-            console.error("Erro precessando aluno: " + nomeAluno + " idMentor:" + idMentorAluno + ', situaÁ„o: ' + e);
+            console.error("Erro precessando aluno: " + nomeAluno + " idMentor:" + idMentorAluno + ', situa√ß√£o: ' + e);
         }
     }   
 }
@@ -99,7 +110,7 @@ function removeUsuariosAusentes(moodle, curso)
 {
     moodle.getUsuariosPorCurso(curso.id, function (erro, listUsuarios) {
         if (erro) {
-            console.error("Erro removeUsuariosAusentes: " + erro + "\n N„o foi possivel listar os usarios do curso: " + curso.nome + '-' + curso.codigoTurma);
+            console.error("Erro removeUsuariosAusentes: " + erro + "\n N√£o foi possivel listar os usarios do curso: " + curso.nome + '-' + curso.codigoTurma);
             return;
         }        
         for (var i in listUsuarios) {
@@ -116,23 +127,6 @@ function removeUsuariosAusentes(moodle, curso)
             });
         }
     });
-}
-
-function addAluno(moodle, curso, arrayCampos, sincronizado) // se sincronizado===true ent„o ele espera a inserÁ„o no moodle para continuar se n„o ele n„o espera
-{
-    if (sincronizado) {
-        var usr = sync.addUsuario.sync(null, moodle, arrayCampos);
-        if (usr) {
-            moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
-        }
-    } else {
-        sync.addUsuario(moodle, arrayCampos, function (erro, usr) {
-            if (usr) {
-                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
-            }
-        });
-    }
-    
 }
 
 function getRowsFromMentor(sql, callback)
@@ -228,14 +222,14 @@ moodle.conectar(function () {
                 processaCurso(curso);
                             //});                            
             }
-                        catch (e) {
+            catch (e) {
                 console.error("Erro: " + e);
             }
-                        //if(i>1) break; // apenas para DEBUG
+            //if(i>1) break; // apenas para DEBUG
         }
         console.log('processados: ' + rows.length + ' cursos');
         
-        setTimeout(function () { // aguarda a finalizaÁ„o das thread e exit.
+        setTimeout(function () { // aguarda a finaliza√ß√£o das thread e exit.
             var array = process._getActiveHandles();
             var array2 = process._getActiveRequests();
             connectionPostfix.end(function (err) {
@@ -247,33 +241,23 @@ moodle.conectar(function () {
 });
 
 
-/*var connection = new tedious.Connection(config.configMentor);
-    connection.on('connect', function (err) {
-        if (err)
-            console.error(err);
-        else {            
-            
-            var request = new tedious.Request(query, function (err, rowCount) {
-                connection.close();
-                
-                sequencial(function () {
-                    
-                });
-            });
-            request.on('doneInProc', function (rowCount, more, rows) {
-                for (var i in rows) {
-                    var columns = rows[i];
-                    arrayCursos[i] = {
-                        nome: columns[0].value,
-                        codigoDisciplina: columns[1].value,
-                        codigoTurma: columns[2].value,
-                        prof: columns[3].value,
-                        categoria: columns[4].value,
-                    };
-                }
-            });
-            connection.execSql(request);
+/*
+
+function addAluno(moodle, curso, aluno, sincronizado) // se sincronizado===true ent√£o ele espera a inser√ß√£o no moodle para continuar se n√£o ele n√£o espera
+{
+    if (sincronizado) {
+        var usr = sync.addUsuario.sync(null, moodle, aluno);
+        if (usr) {
+            moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
         }
-    });
- * 
- * */
+    } else {
+        sync.addUsuario(moodle, aluno, function (erro, usr) {
+            if (usr) {
+                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
+            }
+        });
+    }
+    
+}
+ 
+ */

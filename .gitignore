@@ -1,4 +1,5 @@
 .ntvs*
+*.suo
 /bin
 /obj
 /node_modules

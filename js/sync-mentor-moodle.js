@@ -9,9 +9,9 @@ module.exports = {
 function addCurso(moodle, curso, callback)
 {
     var busca = moodle.getCursos.sync(moodle, curso.codigoDisciplina + '-' + curso.codigoTurma); // busca o curso se exite
-    if (busca && busca.total === 0) { // se n„o existe insere
+    if (busca && busca.total === 0) { // se n√£o existe insere
         var categoria = moodle.getCategorias.sync(moodle, curso.categoria);
-        if (categoria.length === 0) {  // se a categoria n„o existe ent„o cria-se
+        if (categoria.length === 0) {  // se a categoria n√£o existe ent√£o cria-se
             categoria = moodle.criarCategoria.sync(moodle, curso.categoria);
         }
         curso.categoria = categoria[0].id;
@@ -23,33 +23,18 @@ function addCurso(moodle, curso, callback)
     callback(null, curso);
 }
 
-function addUsuario(moodle, campos, callback)
+function addUsuario(moodle, usuario)
 {
-    moodle.getUsuario(campos[3], function(erro, usuario){        
-        if(usuario && usuario.users.length === 0){
-            usuario = {
-                nome: campos[1],
-                sobrenome: campos[2],
-                email: campos[3],
-                senha: campos[4]
-            };
-            moodle.criarUsuario(usuario, function (erro, result) {
-                if (!erro) {
-                    usuario.id = result[0].id;
-                    callback(null, usuario);
-                } else {
-                    callback(null, null);
-                }
-            });
-        }
-        else if( ! erro) {
-            usuario = usuario.users[0];
-            callback(null, usuario);
-        }
-        else {
-            callback(null, null);
-        }
-    });
+    var busca = moodle.getUsuario.sync(moodle, usuario.email);
+    if(busca && busca.users.length === 0){        
+        var criado = moodle.criarUsuario.sync(moodle, usuario);
+        usuario.id = criado[0].id;
+    }
+    else{
+        usuario.id = busca.users[0].id;
+        moodle.atualizaUsuario.sync(moodle, usuario);
+    }
+    return usuario;
 }
 
 

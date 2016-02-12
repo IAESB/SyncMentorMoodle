@@ -44,8 +44,13 @@ var Moodle = function(connection) {
     }
     
     this.criarUsuario = function(usuario, callback){
-        var param = " users[0][username]="+usuario.email+"&users[0][password]="+usuario.senha+"&users[0][firstname]="+usuario.nome+"&users[0][lastname]="+usuario.sobrenome+"&users[0][email]="+usuario.email;
+        var param = "users[0][username]="+usuario.email+"&users[0][password]="+usuario.senha+"&users[0][auth]=pop3&users[0][firstname]="+usuario.nome+"&users[0][lastname]="+usuario.sobrenome+"&users[0][email]="+usuario.email;
         this.callRequestFunc("core_user_create_users", param, callback);
+    }
+    
+    this.atualizaUsuario = function(usuario, callback){
+        var param = "users[0][id]="+usuario.id+"&users[0][username]="+usuario.email+"&users[0][password]="+usuario.senha+"&users[0][auth]=pop3&users[0][firstname]="+usuario.nome+"&users[0][lastname]="+usuario.sobrenome+"&users[0][email]="+usuario.email;
+        this.callRequestFunc("core_user_update_users", param, callback);
     }
     
     this.getUsuario = function(email, callback){
@@ -98,9 +103,9 @@ function requestServidor(url, callback){
                     error = dados.message;
                 }
             }
-            if (typeof callback != "function") {
+            if (error || typeof callback != "function") {
                 error = url + '\n' + error;
-                console.error("callback is not a functions: "+error);
+                //console.error("callback is not a functions: "+error);
             }
             callback(error, dados);
         });

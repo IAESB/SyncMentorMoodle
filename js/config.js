@@ -1,9 +1,9 @@
 ﻿var configMentor = {
     ANO: 2015,
     SEMESTRE: 2,
-    userName: 'user',
-    password: 'passww',
-    server: 'local.db',
+    userName: 'leitor',
+    password: 'SoSeiLer',
+    server: '192.168.9.232',
     options: {
         database: 'mentor', 
         port: '4304',
@@ -25,7 +25,7 @@ var configPostfix = {
 var configMoodle = {
     url        : 'http://aep.fasb.edu.br',
     user       : 'admin', 
-    password   : 'passworddd',     
+    password   : 'Aep2016@dmin',     
     service    : 'mentor_sync',  
     PERFIL_ESTUDANTE: 5,
     PERFIL_PROFESSOR: 3,
