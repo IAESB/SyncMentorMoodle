@@ -73,6 +73,7 @@ Aqui você vai encontrar varios itens a serem seguidos para habilitar o WebServi
 	* core_course_search_courses
 	* core_course_create_courses
 	* core_user_create_users
+	* core_user_update_users
 	* core_user_get_users
 	* core_enrol_get_enrolled_users
 	* enrol_manual_enrol_users
