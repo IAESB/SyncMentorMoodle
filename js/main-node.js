@@ -77,10 +77,10 @@ function execultaAlunos(moodle, curso) {
                 console.error("Erro -  " + email.nome + '-' + idMentorAluno + '-' + email.email);
                 continue;
             }
-            console.log("aluno;" + email.nome + ';' + email.email + ";" + idMentorAluno);
-            var pos = email.nome.indexOf(' ');
-            var primeironome = email.nome.substr(0, pos);
-            var sobrenome = email.nome.substr(pos + 1);
+            console.log("aluno;" + nomeAluno + ';' + email.email + ";" + idMentorAluno);
+            var pos = nomeAluno.indexOf(' ');
+            var primeironome = nomeAluno.substr(0, pos);
+            var sobrenome = nomeAluno.substr(pos + 1);
             
             if ( ! cacheCursosUsuario[curso.id]) {
                 cacheCursosUsuario[curso.id] = new Object();
