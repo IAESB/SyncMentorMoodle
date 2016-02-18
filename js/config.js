@@ -1,6 +1,6 @@
 ﻿var configMentor = {
-    ANO: 2015,
-    SEMESTRE: 2,
+    ANO: 2016,
+    SEMESTRE: 1,
     userName: 'leitor',
     password: 'SoSeiLer',
     server: '192.168.9.232',

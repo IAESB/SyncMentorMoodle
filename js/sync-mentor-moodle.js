@@ -10,11 +10,13 @@ function addCurso(moodle, curso, callback)
 {
     var busca = moodle.getCursos.sync(moodle, curso.codigoDisciplina + '-' + curso.codigoTurma); // busca o curso se exite
     if (busca && busca.total === 0) { // se não existe insere
-        var categoria = moodle.getCategorias.sync(moodle, curso.categoria);
-        if (categoria.length === 0) {  // se a categoria não existe então cria-se
-            categoria = moodle.criarCategoria.sync(moodle, curso.categoria);
+        if (isNaN(curso.categoria)) {
+            var categoria = moodle.getCategorias.sync(moodle, curso.categoria);
+            if (categoria.length === 0) {  // se a categoria não existe então cria-se
+                categoria = moodle.criarCategoria.sync(moodle, curso.categoria);
+            }
+            curso.categoriaId = categoria[0].id;
         }
-        curso.categoria = categoria[0].id;
         busca = moodle.criarCurso.sync(moodle, curso);
         curso.id = busca[0].id;
     }else{

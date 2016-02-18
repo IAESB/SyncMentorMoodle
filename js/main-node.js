@@ -16,24 +16,62 @@ var moodle = Moodle(config.configMoodle);
 
 
 function processaCurso(curso)
-{
+{    
+    curso = sync.addCurso.sync(null, moodle, curso);
     if (curso) {
-        console.log(curso.nome + " - " + curso.codigoDisciplina + '-' + curso.codigoTurma);
+        console.log(curso.nome); // debug
         execultaProfessor(moodle, curso);
-        execultaAlunos(moodle, curso);
+        var coord = addCoordenadoria(moodle, curso);
+        execultaAlunos(moodle, curso, coord);
         removeUsuariosAusentes(moodle, curso);
     }
 }
 
+function addCoordenadoria(moodle, curso)
+{
+    var sql = "SELECT DISTINCT   CCN_CODCOO \
+    FROM \
+        TB_CURSO, \
+	    TB_CURSO_COORDENADOR \
+    WHERE \
+        CR_CODCUR = CCN_CODCUR \
+        AND CR_CODCUR = '"+curso.codigoCurso+"'";
+    try {
+        var coo = {
+            nome: "COORDENAÇÃO DE "+curso.categoria,
+            codigoDisciplina: "COORD",
+            codigoTurma: curso.codigoCurso,
+            categoria: curso.categoria,
+        };
+        var coo = sync.addCurso.sync(null, moodle, coo);
 
-function execultaProfessor(moodle, curso) {
+        var rows = getRowsFromMentor.sync(null, sql);
+        for (var i in rows) {
+            var corrdenador = getEmail.sync(null, rows[i][0].value);
+            var pos = corrdenador.nome.indexOf(' ');
+            corrdenador.sobrenome = corrdenador.nome.substr(pos + 1);
+            corrdenador.nome = corrdenador.nome.substr(0, pos);
+            corrdenador.senha = "Prof@123Senha";            
+            
+            var usr = sync.addUsuario(moodle, corrdenador);
+            moodle.inscreverUsuarioCurso(usr.id, coo.id, config.configMoodle.PERFIL_PROFESSOR, function (err, result) { });
+        }        
+        return coo;
+    }
+    catch (erro) {
+        console.error("Erro ao precessar coodenadoria: " + erro);
+    }
+}
+
+function execultaProfessor(moodle, curso) 
+{
     
     try {
         var professor = getEmail.sync(null, curso.prof);
         var pos = professor.nome.indexOf(' ');
         professor.sobrenome = professor.nome.substr(pos + 1);
         professor.nome = professor.nome.substr(0, pos);
-        professor.senha = "Prof@123Senha"
+        professor.senha = "Prof@123Senha";
         
         console.log("professor;" + professor.nome + ';' + professor.sobrenome + ';' + professor.email + ";" + curso.prof);
         
@@ -51,7 +89,7 @@ function execultaProfessor(moodle, curso) {
     }
 }
 
-function execultaAlunos(moodle, curso) {
+function execultaAlunos(moodle, curso, coord) {
     var query = "SELECT DISTINCT AL_NOMALU, AL_ALUTEL \
     FROM \
         TB_MESTRE_DISCIPLINA, \
@@ -96,6 +134,7 @@ function execultaAlunos(moodle, curso) {
             var usr = sync.addUsuario(moodle, aluno);
             if (usr) {
                 moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
+                moodle.inscreverUsuarioCurso(usr.id, coord.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
             }
             //addAluno(moodle, curso, aluno, (i % config.configMoodle.CONEXAO_SIMULTANEA_MOODLE == 0));
             
@@ -186,15 +225,15 @@ var arrayCursos = [];
 moodle.conectar(function () {
     sequencial(function () {
         var query = "SELECT DISTINCT \
-            DI_DESDIS, DI_DISTEL, MD_CODTUR, PF_CODPRO, CR_NOMCUR \
+            DI_DESDIS, DI_DISTEL, MD_CODTUR, PF_CODPRO, CR_NOMCUR, CR_CODCUR \
             FROM \
-            TB_CURSO, \
+                TB_CURSO, \
                 TB_GRADE, \
                 TB_MESTRE_DISCIPLINA, \
+                TB_ALUNO, \
                 TB_DISCIPLINA \
-            left outer join TB_GRADE_HORARIO_PROF on(DI_CODDIS = GP_CODDIS and GP_ANOMAT=" + config.configMentor.ANO + "  AND GP_SEQMAT = " + config.configMentor.SEMESTRE + " ) \
-            left outer JOIN TB_PROFESSOR on(GP_CODPRO = PF_CODPRO), \
-                TB_ALUNO \
+                    left outer join TB_GRADE_HORARIO_PROF on(DI_CODDIS = GP_CODDIS and GP_ANOMAT=" + config.configMentor.ANO + "  AND GP_SEQMAT = " + config.configMentor.SEMESTRE + " ) \
+                    left outer JOIN TB_PROFESSOR on(GP_CODPRO = PF_CODPRO) \
             WHERE \
                 MD_ANOMAT = " + config.configMentor.ANO + " \
                 AND MD_SEQMAT = " + config.configMentor.SEMESTRE + " \
@@ -210,22 +249,23 @@ moodle.conectar(function () {
 
         for (var i in rows) {
             var columns = rows[i];
-            curso = {
+            var curso = {
                 nome: columns[0].value,
                 codigoDisciplina: columns[1].value,
                 codigoTurma: columns[2].value,
                 prof: columns[3].value,
                 categoria: columns[4].value,
+                codigoCurso: columns[5].value,
             };
+            curso.nome += " " + curso.codigoTurma;
             try {
-                var curso = sync.addCurso.sync(null, moodle, curso);//, function(curso){
                 processaCurso(curso);
                             //});                            
             }
             catch (e) {
                 console.error("Erro: " + e);
             }
-            //if(i>1) break; // apenas para DEBUG
+//            if(i>1) break; // apenas para DEBUG
         }
         console.log('processados: ' + rows.length + ' cursos');
         
@@ -239,25 +279,3 @@ moodle.conectar(function () {
         }, 50000);
     });
 });
-
-
-/*
-
-function addAluno(moodle, curso, aluno, sincronizado) // se sincronizado===true então ele espera a inserção no moodle para continuar se não ele não espera
-{
-    if (sincronizado) {
-        var usr = sync.addUsuario.sync(null, moodle, aluno);
-        if (usr) {
-            moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
-        }
-    } else {
-        sync.addUsuario(moodle, aluno, function (erro, usr) {
-            if (usr) {
-                moodle.inscreverUsuarioCurso(usr.id, curso.id, config.configMoodle.PERFIL_ESTUDANTE, function (erro, res) { });
-            }
-        });
-    }
-    
-}
- 
- */

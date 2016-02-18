@@ -39,7 +39,7 @@ var Moodle = function(connection) {
     }
 
     this.criarCurso = function(curso, callback){        
-        var param = "courses[0][fullname]="+curso.nome+"&courses[0][shortname]="+curso.codigoDisciplina+'-'+curso.codigoTurma+"&courses[0][categoryid]="+curso.categoria+"&courses[0][numsections]=1";
+        var param = "courses[0][fullname]="+curso.nome+"&courses[0][shortname]="+curso.codigoDisciplina+'-'+curso.codigoTurma+"&courses[0][categoryid]="+curso.categoriaId+"&courses[0][numsections]=1";
         this.callRequestFunc("core_course_create_courses", param, callback);
     }
     
