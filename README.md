@@ -81,5 +81,5 @@ Aqui você vai encontrar varios itens a serem seguidos para habilitar o WebServi
 
 Executar
 --------
-Agora basta rodar com o comando:
+Agora basta rodar com o comando (Arquivo localizado na pasta \root\SyncMentorMoodle):
 - nodejs js/main-node.js
