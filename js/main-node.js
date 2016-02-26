@@ -224,6 +224,7 @@ function getIdMentor(email, callback) {
 var arrayCursos = [];
 moodle.conectar(function () {
     sequencial(function () {
+        var dataInicio = new Date();
         var query = "SELECT DISTINCT \
             DI_DESDIS, DI_DISTEL, MD_CODTUR, PF_CODPRO, CR_NOMCUR, CR_CODCUR \
             FROM \
@@ -265,9 +266,11 @@ moodle.conectar(function () {
             catch (e) {
                 console.error("Erro: " + e);
             }
-//            if(i>1) break; // apenas para DEBUG
+            //if(i==0) break; // apenas para DEBUG
         }
+        var dataTermino = new Date();
         console.log('processados: ' + rows.length + ' cursos');
+        console.log('Inicio da sincronia: ' + dataInicio + '\Término: ' + dataTermino);
         
         setTimeout(function () { // aguarda a finalização das thread e exit.
             var array = process._getActiveHandles();
